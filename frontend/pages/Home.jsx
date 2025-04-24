@@ -33,7 +33,6 @@ function Home() {
         username,
         password
       });
-      console.log(response.data.token);
       localStorage.setItem("token", response.data.token);
       window.location.href = '/admin/dashboard'; // Redirect to admin dashboard after login
     } catch (error) {

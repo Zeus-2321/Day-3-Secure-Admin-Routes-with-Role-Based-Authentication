@@ -25,7 +25,6 @@ const verifyToken = async (req, res, next) => {
   if(!freshUser) {
     return res.status(400).json({ message: "User no longer exists" });
   }
-  console.log(freshUser);
   req.user = freshUser;
   next();
 };

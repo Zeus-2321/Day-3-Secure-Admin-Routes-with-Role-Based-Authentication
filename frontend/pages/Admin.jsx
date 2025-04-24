@@ -3,53 +3,80 @@ import axios from 'axios';
 
 function Admin() {
   const [content, setContent] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false); // Track if the user has admin privileges
+  const [isAdmin, setIsAdmin] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
-        window.location.href = "/"; // Redirect to home page if no token
+        window.location.href = "/";
         return;
       }
 
       try {
-        // Fetch user information (role) along with the dashboard data
-        const response = await axios.get("http://localhost:5000/api/admin/dashboard", {
+        const response = await axios.get("http://localhost:5000/api/admin", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        // If the user has admin privileges, allow access to the dashboard
-        if (response.data.role === 'admin') {
+        if (response.data.user.role === 'admin') {
           setIsAdmin(true);
-          setContent(response.data.content); // Set the actual confidential content
+          setContent(response.data.message);
         } else {
           setIsAdmin(false);
           setErrorMessage("You do not have admin access. This page is confidential.");
         }
       } catch (error) {
         setErrorMessage("Access denied or token expired.");
-        window.location.href = "/"; // Redirect to home page if token expired or invalid
+        console.log(error);
+        setIsAdmin(false);
       }
     };
+
     fetchDashboardData();
   }, []);
+
+  // Countdown and redirect logic
+  useEffect(() => {
+    if (!isAdmin && errorMessage) {
+      const interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            window.location.href = "/";
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin, errorMessage]);
+
+  // Logout function
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/";
+  };
 
   return (
     <div>
       <h1>Admin Dashboard</h1>
 
-      {/* If the user is not an admin, show a confidential message */}
       {!isAdmin ? (
         <div>
           <p>{errorMessage}</p>
+          {errorMessage && <p>Redirecting in {countdown} seconds...</p>}
         </div>
       ) : (
         <div>
           <p>{content}</p>
+          <button onClick={handleLogout} style={{ marginTop: '1rem' }}>
+            Logout
+          </button>
         </div>
       )}
     </div>

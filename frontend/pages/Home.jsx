@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 function Home() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user"); // Default role is user
   const [errorMessage, setErrorMessage] = useState("");
@@ -10,30 +10,36 @@ function Home() {
 
   const handleRegister = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/register", {
-        email,
+      await axios.post("http://localhost:5000/api/auth/register", {
+        username,
         password,
         role
       });
       alert('Registration successful!');
-      setEmail('');
+      setUsername('');
       setPassword('');
       setRole('user');
+      setIsLogin(true); // Optional: switch to login after registration
     } catch (error) {
-      setErrorMessage(error.response.data || "Registration failed");
+      setErrorMessage(
+        error.response?.data?.message || error.message || "Registration failed"
+      );
     }
   };
 
   const handleLogin = async () => {
     try {
       const response = await axios.post("http://localhost:5000/api/auth/login", {
-        email,
+        username,
         password
       });
+      console.log(response.data.token);
       localStorage.setItem("token", response.data.token);
       window.location.href = '/admin/dashboard'; // Redirect to admin dashboard after login
     } catch (error) {
-      setErrorMessage(error.response.data || "Login failed");
+      setErrorMessage(
+        error.response?.data?.message || error.message || "Login failed"
+      );
     }
   };
 
@@ -44,8 +50,8 @@ function Home() {
       <input 
         type="email" 
         placeholder="Email" 
-        value={email} 
-        onChange={(e) => setEmail(e.target.value)} 
+        value={username} 
+        onChange={(e) => setUsername(e.target.value)} 
       />
       <input 
         type="password" 
@@ -54,12 +60,8 @@ function Home() {
         onChange={(e) => setPassword(e.target.value)} 
       />
       
-      {/* Only show this input for registration form */}
       {!isLogin && (
-        <select 
-          value={role} 
-          onChange={(e) => setRole(e.target.value)}
-        >
+        <select value={role} onChange={(e) => setRole(e.target.value)}>
           <option value="user">User</option>
           <option value="admin">Admin</option>
         </select>
@@ -69,7 +71,7 @@ function Home() {
         {isLogin ? "Login" : "Register"}
       </button>
 
-      <p>{errorMessage}</p>
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
       
       {/* Toggle between login and register form */}
       <button onClick={() => setIsLogin(!isLogin)}>

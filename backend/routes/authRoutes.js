@@ -71,6 +71,12 @@ router.post("/login", async (req, res) => {
     userId: user._id,
     role: user.role
   })
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV == "production",
+    sameSite: true
+  });
   res.json({ token });
 });
 

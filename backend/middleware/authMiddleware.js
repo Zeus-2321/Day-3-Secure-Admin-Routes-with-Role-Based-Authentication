@@ -3,32 +3,32 @@ const User = require('../models/User');
 
 // Middleware to verify if the user is authenticated
 const verifyToken = async (req, res, next) => {
-  let idToken = '';
+  console.log(req.cookies);
+  const idToken = req.cookies?.token;
 
-  if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    idToken = req.headers.authorization.split(' ')[1];
+  if (!idToken) {
+    return res.status(401).json({ message: "Please login to get access" });
   }
-  if(!idToken) {
-    return res.status(401).json({ message: "Please login to get access" }); 
-  }
+
   let tokenDetail;
   try {
     tokenDetail = jwt.verify(idToken, process.env.JWT_SECRET);
-  } catch(err) {
+  } catch (err) {
     console.log(err);
-    return res.status(400).json({ message: "Invalid token"})
+    return res.status(400).json({ message: "Invalid token" });
   }
 
   const _id = tokenDetail.userId;
-  const freshUser = await User.findOne({_id});
+  const freshUser = await User.findOne({ _id });
 
-  if(!freshUser) {
+  if (!freshUser) {
     return res.status(400).json({ message: "User no longer exists" });
   }
+
   req.user = freshUser;
   next();
 };
-  
+
 // Middleware to verify if the user is an admin
 const isAdmin = (req, res, next) => {
   if (!req.user || req.user.role !== 'admin') {
